@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LorryLink Test Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{
+  --bg:#f1f4f8; --panel:#ffffff; --panel2:#f6f8fb; --ink:#14212b; --muted:#5f6f7e; --line:#dbe2ea;
+  --accent:#0f6b82; --accent-ink:#ffffff; --accent-soft:#dff0f5;
+  --pass:#1b7f4b; --pass-bg:#dff3e7;
+  --fail:#b3261e; --fail-bg:#fbe3e1;
+  --block:#9a6200; --block-bg:#fbefd0;
+  --pend:#506070; --pend-bg:#e6ebf0;
+  --shadow:0 1px 2px rgba(16,32,48,.06),0 4px 14px rgba(16,32,48,.06);
+  --shadow-hover:0 2px 4px rgba(16,32,48,.08),0 10px 24px rgba(16,32,48,.12);
+  --font:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0c1319; --panel:#15202a; --panel2:#1a2833; --ink:#e8eef3; --muted:#9aa9b6; --line:#2a3946;
+    --accent:#4fbad4; --accent-ink:#04202a; --accent-soft:#16363f;
+    --pass:#6fd69b; --pass-bg:#16382a;
+    --fail:#ff8f86; --fail-bg:#42201e;
+    --block:#f0c15a; --block-bg:#3b2f12;
+    --pend:#b4c0cb; --pend-bg:#26323d;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 14px rgba(0,0,0,.25);
+    --shadow-hover:0 2px 4px rgba(0,0,0,.5),0 10px 24px rgba(0,0,0,.4);
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.45}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+svg{flex:none}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 60px}
+
+/* top bar */
+.top{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);margin:0 -20px 22px;padding:14px 20px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.crumb{display:flex;align-items:center;gap:12px;min-width:0}
+.logo{width:40px;height:40px;border-radius:10px;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center}
+.ttl h1{margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em;line-height:1.2}
+.ttl small{display:block;color:var(--muted);font-size:13px}
+.hbtns{display:flex;flex-wrap:wrap;gap:8px}
+
+/* inputs & buttons */
+input,select,textarea{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 12px;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:80px}
+.btn{display:inline-flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 15px;cursor:pointer;font-weight:500;box-shadow:0 1px 1px rgba(16,32,48,.04)}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:disabled{opacity:.6;cursor:default}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.btn.primary:hover{filter:brightness(1.08);color:var(--accent-ink)}
+.btn.danger{color:var(--fail);border-color:color-mix(in srgb,var(--fail) 45%,var(--line))}
+.btn.danger:hover{background:var(--fail-bg);border-color:var(--fail);color:var(--fail)}
+.btn.ghost{background:transparent;box-shadow:none}
+.btn.danger.solid{background:var(--fail);color:#fff;border-color:var(--fail)}
+
+/* login */
+.login{max-width:400px;margin:12vh auto 0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:28px;display:grid;gap:14px;box-shadow:var(--shadow)}
+.login h1{margin:0;font-size:22px}
+.login p{margin:0;color:var(--muted);font-size:14px}
+.err{color:var(--fail);font-size:14px;min-height:20px}
+
+/* search */
+.search{position:relative;margin-bottom:18px}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.search input{padding-left:38px}
+
+/* folders */
+.folders{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px}
+.folder{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;cursor:pointer;display:grid;gap:14px;text-align:left;box-shadow:var(--shadow);transition:transform .12s,box-shadow .12s,border-color .12s}
+.folder:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover);border-color:var(--accent)}
+.ftop{display:flex;gap:12px;align-items:flex-start}
+.ficon{width:42px;height:42px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center}
+.fn{font-weight:600;font-size:16px;line-height:1.3;word-break:break-word}
+.meta{color:var(--muted);font-size:13px}
+.bar{display:flex;height:8px;border-radius:99px;overflow:hidden;background:var(--pend-bg)}
+.bar i{display:block;height:100%}
+.bar .s-pass{background:var(--pass)} .bar .s-fail{background:var(--fail)} .bar .s-blocked{background:var(--block)} .bar .s-pending{background:var(--pend)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.fbot{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:12px}
+.fbot b{color:var(--ink);font-weight:600}
+
+.pill{display:inline-flex;align-items:center;border-radius:999px;padding:3px 11px;font-size:13px;font-weight:600}
+.pill.pass{background:var(--pass-bg);color:var(--pass)}
+.pill.fail{background:var(--fail-bg);color:var(--fail)}
+.pill.blocked{background:var(--block-bg);color:var(--block)}
+.pill.pending{background:var(--pend-bg);color:var(--pend)}
+.pill.mini{padding:1px 9px;font-size:12px}
+
+/* empty */
+.emptycard{grid-column:1/-1;background:var(--panel);border:1.5px dashed var(--line);border-radius:14px;padding:56px 20px;text-align:center;display:grid;justify-items:center;gap:10px}
+.emptycard .ficon{width:60px;height:60px;border-radius:16px}
+.emptycard h3{margin:6px 0 0;font-size:18px}
+.emptycard p{margin:0 0 8px;color:var(--muted);max-width:380px}
+
+/* stats */
+.summary{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}
+.sum{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;text-align:left;box-shadow:var(--shadow)}
+.sum b{display:block;font-size:26px;font-weight:700;line-height:1.1}
+.sum span{font-size:13px;color:var(--muted)}
+.sum.k-all{border-left-color:var(--accent)} .sum.k-pass{border-left-color:var(--pass)} .sum.k-fail{border-left-color:var(--fail)} .sum.k-blocked{border-left-color:var(--block)} .sum.k-pending{border-left-color:var(--pend)}
+.sum.on{background:var(--accent-soft);border-color:var(--accent)}
+.sum:hover{border-color:var(--accent)}
+
+.tools{display:flex;gap:10px;margin-bottom:14px}
+.tools .search{flex:1;margin:0}
+
+/* table */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:auto;box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse;min-width:760px}
+th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--panel2);padding:11px 16px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+tr.row{cursor:pointer}
+tr.row:hover td{background:var(--panel2)}
+.c-no{color:var(--muted);font-variant-numeric:tabular-nums;width:56px}
+.c-view{font-weight:600;min-width:180px}
+.c-view small{display:block;font-weight:400;color:var(--muted);font-size:13px;max-width:320px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c-note{min-width:220px;max-width:420px;white-space:pre-wrap;word-break:break-word;font-size:14px}
+.c-when{font-size:13px;color:var(--muted);white-space:nowrap}
+.by{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.av{width:26px;height:26px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.strip{display:flex;gap:6px}
+.tcell{position:relative;width:76px;height:54px;border:1px solid var(--line);border-radius:6px;background:var(--panel2);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--fail)}
+.tcell img{width:100%;height:100%;object-fit:cover}
+.tcell .more{position:absolute;right:3px;bottom:3px;background:rgba(0,0,0,.7);color:#fff;border-radius:4px;font-size:11px;padding:0 5px}
+.noshot{color:var(--muted);font-size:13px}
+
+/* dialogs */
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--ink);padding:0;width:min(720px,94vw);max-height:92vh;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(6,12,18,.65);backdrop-filter:blur(2px)}
+.dhead{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line)}
+.dhead h2{margin:0;font-size:18px;font-weight:700}
+.dbody{padding:18px 20px;overflow:auto;max-height:calc(92vh - 140px);display:grid;gap:14px}
+.dfoot{display:flex;gap:8px;justify-content:space-between;padding:14px 20px;border-top:1px solid var(--line);background:var(--panel2);border-radius:0 0 14px 14px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+label{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-bottom:5px}
+.drop{border:2px dashed var(--accent);border-radius:10px;padding:20px;text-align:center;color:var(--muted);cursor:pointer;font-size:14px;background:var(--accent-soft)}
+.drop.over{background:var(--panel2)}
+.drop b{color:var(--ink);font-weight:600}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:10px}
+.th{position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--panel2);aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.th img{width:100%;height:100%;object-fit:cover}
+.th .pdf{text-align:center;font-size:13px;padding:8px;word-break:break-all;color:var(--muted)}
+.th .pdf b{display:block;font-size:20px;color:var(--fail)}
+.th .x{position:absolute;top:5px;right:5px;background:rgba(0,0,0,.7);color:#fff;border:0;border-radius:6px;width:26px;height:26px;cursor:pointer;line-height:1;font-size:16px}
+.th .x:hover{background:var(--fail)}
+.th .tag{position:absolute;left:5px;bottom:5px;background:rgba(0,0,0,.7);color:#fff;border-radius:4px;font-size:11px;padding:1px 6px}
+#adlg{width:min(440px,94vw)}
+#adlg .dbody{gap:10px}
+#aMsg{margin:0;color:var(--muted);font-size:14px}
+#adlg .dfoot{justify-content:flex-end;background:transparent}
+#lb{width:auto;max-width:96vw;background:#0b1116;border:0}
+#lb .lbbar{display:flex;justify-content:space-between;gap:12px;padding:10px 14px;color:#dfe7ee;font-size:14px}
+#lb .lbbar a{color:#8fd3e6}
+#lb img{display:block;max-width:94vw;max-height:84vh;margin:0 auto;object-fit:contain;background:#fff}
+#msg{position:fixed;inset:auto auto 22px 50%;margin:0;transform:translateX(-50%);border:0;background:var(--ink);color:var(--bg);padding:12px 20px;border-radius:8px;max-width:90vw;font-weight:500;box-shadow:var(--shadow-hover)}
+@media (max-width:760px){
+  .summary{grid-template-columns:repeat(2,1fr)}
+  .two{grid-template-columns:1fr}
+  .hide-m{display:none}
+  table{min-width:0}
+}
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<form class="login" id="loginView" hidden>
+  <h1>LorryLink Test Log</h1>
+  <p>Sign in with your approved email.</p>
+  <div><label for="lEmail">Email</label><input id="lEmail" type="email" autocomplete="username" required></div>
+  <div><label for="lPass">Password</label><input id="lPass" type="password" autocomplete="current-password" required></div>
+  <div class="err" id="lErr" role="alert"></div>
+  <button class="btn primary" id="lBtn" type="submit" style="justify-content:center">Sign in</button>
+</form>
+
+<!-- App -->
+<div class="wrap" id="appView" hidden>
+  <header class="top">
+    <div class="crumb" id="crumb"></div>
+    <div class="hbtns" id="hbtns"></div>
+  </header>
+
+  <!-- Folder list -->
+  <div id="foldersView">
+    <div class="search" id="fsearch">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="fq" type="search" placeholder="Search folders">
+    </div>
+    <div class="folders" id="folders"></div>
+  </div>
+
+  <!-- Inside a folder -->
+  <div id="folderView" hidden>
+    <div class="summary" id="summary"></div>
+    <div class="tools">
+      <div class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="Search view, what was updated, tester">
+      </div>
+      <button class="btn" id="refresh">Refresh</button>
+    </div>
+    <div id="list"></div>
+  </div>
+</div>
+
+<!-- Entry dialog -->
+<dialog id="dlg">
+  <div class="dhead"><h2 id="dtitle">New record</h2><button class="btn ghost" id="dclose" aria-label="Close">Close</button></div>
+  <div class="dbody">
+    <div class="two">
+      <div><label for="fView">View (page / screen tested)</label><input id="fView" placeholder="e.g. Job Posting page"></div>
+      <div><label for="fStatus">Result</label>
+        <select id="fStatus">
+          <option value="pending">Pending</option>
+          <option value="pass">Pass</option>
+          <option value="fail">Fail</option>
+          <option value="blocked">Blocked</option>
+        </select>
+      </div>
+    </div>
+    <div class="two">
+      <div><label for="fTester">Tested by</label><input id="fTester" placeholder="e.g. Adriana" autocomplete="name"></div>
+      <div><label for="fWhen">Tested at</label><input id="fWhen" type="datetime-local"></div>
+    </div>
+    <div><label for="fNote">What was updated</label><textarea id="fNote" placeholder="Explain what changed in this view, and what the screenshot shows"></textarea></div>
+    <div>
+      <label>Screenshots</label>
+      <div class="drop" id="drop" tabindex="0"><b>Click here, then Ctrl+V</b> to paste a screenshot<br>or drop / click to choose PNG, JPG, PDF</div>
+      <div class="thumbs" id="thumbs"></div>
+    </div>
+    <input type="file" id="file" accept="image/png,image/jpeg,image/webp,application/pdf" multiple hidden>
+  </div>
+  <div class="dfoot">
+    <button class="btn danger" id="delBtn">Delete record</button>
+    <button class="btn primary" id="saveBtn">Save</button>
+  </div>
+</dialog>
+
+<dialog id="lb">
+  <div class="lbbar"><span id="lbname"></span><span><a id="lbopen" target="_blank" rel="noopener">Open original</a> &nbsp; <a href="#" id="lbclose">Close</a></span></div>
+  <img id="lbimg" alt="">
+</dialog>
+
+<!-- Name / confirm dialog -->
+<dialog id="adlg">
+  <form id="aForm">
+    <div class="dhead"><h2 id="aTitle"></h2></div>
+    <div class="dbody">
+      <p id="aMsg"></p>
+      <input id="aInput" autocomplete="off" aria-label="Name">
+    </div>
+    <div class="dfoot">
+      <button class="btn" type="button" id="aCancel">Cancel</button>
+      <button class="btn primary" type="submit" id="aOk">OK</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="msg" role="status" popover="manual"></div>
+
+<script>
+// ====== CONFIG ======
+const SUPABASE_URL = "https://yvtujoueyotncbvdlgyf.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_98O37WT0nSZVw2I9128JOg___CX38Dn";
+// ====================
+
+const TABLE = "testlog_cases";
+const BUCKET = "testlog-evidence";
+const MAX_MB = 15;
+const NONE = "__none";
+const NONE_LABEL = "No folder";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const LABEL = {pending:"Pending", pass:"Pass", fail:"Fail", blocked:"Blocked"};
+const ico = (d, s=20) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const I = {
+  folder: ico('<path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'),
+  check: ico('<path d="M9 12l2 2 4-4"/><rect x="3" y="3" width="18" height="18" rx="4"/>', 22),
+  plus: ico('<path d="M12 5v14M5 12h14"/>', 16),
+  back: ico('<path d="M15 6l-6 6 6 6"/>', 16),
+  edit: ico('<path d="M4 20h4L19 9l-4-4L4 16z"/>', 16),
+  trash: ico('<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>', 16),
+  out: ico('<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/>', 16)
+};
+
+let cases = [], thumbs = {}, statusFilter = "";
+let openFolder = null;
+let draftFolders = [];
+let cur = null;
+
+const fkey = x => x.round || NONE;
+const fname = k => k === NONE ? NONE_LABEL : k;
+const tsOf = x => new Date(x.tested_at || x.updated_at || 0).getTime();
+const fmt = t => t ? new Date(t).toLocaleString([], {year:"numeric",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}) : "";
+const isPdf = a => (a.mime||"").includes("pdf") || /\.pdf$/i.test(a.name||"");
+function toast(t){
+  const m=$("msg"); m.textContent=t;
+  try{ if(m.matches(":popover-open")) m.hidePopover(); m.showPopover(); }catch(e){}
+  clearTimeout(toast.t); toast.t=setTimeout(()=>{ try{ m.hidePopover(); }catch(e){} },6000);
+}
+function toLocalInput(d){ const p=n=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; }
+
+async function signUrls(paths){
+  const out = {};
+  if (!paths.length) return out;
+  const r = await sb.storage.from(BUCKET).createSignedUrls(paths, 3600);
+  if (r.error){ toast("Could not load files: "+r.error.message); return out; }
+  r.data.forEach(x => { if (x.signedUrl) out[x.path] = x.signedUrl; });
+  return out;
+}
+
+// ---------- in-page name / confirm dialog ----------
+let aRes = null, aVal = null;
+function ask({title, message="", input=null, placeholder="", ok="OK", danger=false, selectAll=false}){
+  const inp = $("aInput");
+  $("aTitle").textContent = title;
+  $("aMsg").textContent = message; $("aMsg").hidden = !message;
+  inp.hidden = input === null;
+  if (input !== null){ inp.value = input; inp.placeholder = placeholder; }
+  $("aOk").textContent = ok;
+  $("aOk").className = "btn " + (danger ? "danger solid" : "primary");
+  aVal = null;
+  $("adlg").showModal();
+  if (input !== null){ inp.focus(); selectAll ? inp.select() : inp.setSelectionRange(inp.value.length, inp.value.length); }
+  else $("aOk").focus();
+  return new Promise(r => aRes = r);
+}
+$("aForm").addEventListener("submit", e => {
+  e.preventDefault();
+  aVal = $("aInput").hidden ? true : ($("aInput").value.trim() || null);
+  $("adlg").close();
+});
+$("aCancel").addEventListener("click", () => $("adlg").close());
+$("adlg").addEventListener("close", () => { const r = aRes; aRes = null; if (r) r(aVal); });
+
+// ---------- auth ----------
+function showLogin(){ $("appView").hidden = true; $("loginView").hidden = false; }
+function showApp(){ $("loginView").hidden = true; $("appView").hidden = false; load(); }
+$("loginView").addEventListener("submit", async e => {
+  e.preventDefault();
+  $("lErr").textContent = ""; $("lBtn").disabled = true;
+  const r = await sb.auth.signInWithPassword({email:$("lEmail").value.trim(), password:$("lPass").value});
+  $("lBtn").disabled = false;
+  if (r.error){ $("lErr").textContent = "Sign in failed: "+r.error.message; return; }
+  $("lPass").value = "";
+  showApp();
+});
+async function signOut(){ await sb.auth.signOut(); cases = []; openFolder = null; showLogin(); }
+(async () => {
+  const { data } = await sb.auth.getSession();
+  data.session ? showApp() : showLogin();
+})();
+
+// ---------- load ----------
+async function load(){
+  const c = await sb.from(TABLE).select("*").order("id",{ascending:true});
+  if (c.error){
+    $("folders").innerHTML = '<div class="emptycard"><h3>Could not load data</h3><p>This account may not be on the approved list, or the SQL setup has not been run (testlog_setup.sql, testlog_update.sql, testlog_update2.sql).</p></div>';
+    return;
+  }
+  cases = c.data;
+  draftFolders = draftFolders.filter(n => !cases.some(x => x.round === n));
+  render();
+  const paths = [];
+  cases.forEach(x => (x.attachments||[]).filter(a=>!isPdf(a)).slice(0,3).forEach(a => paths.push(a.path)));
+  thumbs = await signUrls(paths);
+  render();
+}
+
+// ---------- render ----------
+function inFolder(){
+  return cases.filter(x => fkey(x) === openFolder).sort((a,b) => tsOf(a)-tsOf(b) || a.id-b.id);
+}
+
+function render(){
+  renderHeader();
+  $("foldersView").hidden = openFolder !== null;
+  $("folderView").hidden = openFolder === null;
+  openFolder === null ? renderFolders() : renderFolder();
+}
+
+function renderHeader(){
+  if (openFolder === null){
+    $("crumb").innerHTML = `<div class="logo">${I.check}</div><div class="ttl"><h1>LorryLink Test Log</h1><small>One folder per test round</small></div>`;
+    $("hbtns").innerHTML = `<button class="btn primary" id="newFolderBtn">${I.plus}New folder</button><button class="btn ghost" id="outBtn">${I.out}Sign out</button>`;
+    $("newFolderBtn").onclick = newFolder;
+  } else {
+    const list = inFolder();
+    const ts = list.map(tsOf).filter(Boolean);
+    const meta = `${list.length} record${list.length===1?"":"s"}` + (ts.length ? ` · last tested ${fmt(Math.max(...ts))}` : "");
+    $("crumb").innerHTML = `<button class="btn" id="backBtn">${I.back}All folders</button><div class="ttl"><h1>${esc(fname(openFolder))}</h1><small>${esc(meta)}</small></div>`;
+    $("hbtns").innerHTML = `<button class="btn primary" id="newBtn">${I.plus}New record</button><button class="btn" id="renameBtn">${I.edit}Rename</button><button class="btn danger" id="delFolderBtn">${I.trash}Delete folder</button><button class="btn ghost" id="outBtn">${I.out}Sign out</button>`;
+    $("backBtn").onclick = () => { openFolder = null; statusFilter = ""; $("q").value = ""; render(); };
+    $("newBtn").onclick = () => openCase(null);
+    $("renameBtn").onclick = renameFolder;
+    $("delFolderBtn").onclick = deleteFolder;
+  }
+  $("outBtn").onclick = signOut;
+}
+
+function renderFolders(){
+  const map = {};
+  cases.forEach(x => { (map[fkey(x)] ||= []).push(x); });
+  draftFolders.forEach(n => { map[n] ||= []; });
+  const q = $("fq").value.trim().toLowerCase();
+  const total = Object.keys(map).length;
+  $("fsearch").hidden = total === 0;
+  const keys = Object.keys(map).filter(k => !q || fname(k).toLowerCase().includes(q))
+    .sort((a,b) => Math.max(0,...map[b].map(tsOf)) - Math.max(0,...map[a].map(tsOf)));
+  if (!total){
+    $("folders").innerHTML = `<div class="emptycard"><div class="ficon">${I.folder}</div><h3>No folders yet</h3><p>Create one folder for each test day, named by its date (for example 2026-11-18), then add a record for every view you tested.</p><button class="btn primary" id="emptyNew">${I.plus}Create first folder</button></div>`;
+    $("emptyNew").onclick = newFolder; return;
+  }
+  if (!keys.length){ $("folders").innerHTML = '<div class="emptycard"><p>No folder matches your search.</p></div>'; return; }
+  $("folders").innerHTML = keys.map(k => {
+    const list = map[k];
+    const n = {pass:0,fail:0,blocked:0,pending:0};
+    list.forEach(x => n[x.status]++);
+    const segs = ["pass","fail","blocked","pending"].filter(s=>n[s]).map(s=>`<i class="s-${s}" style="width:${n[s]/list.length*100}%"></i>`).join("");
+    const chips = ["pass","fail","blocked","pending"].filter(s=>n[s]).map(s=>`<span class="pill mini ${s}">${n[s]} ${LABEL[s]}</span>`).join("");
+    const testers = [...new Set(list.map(x=>x.tester).filter(Boolean))];
+    const ts = list.map(tsOf).filter(Boolean);
+    const when = ts.length ? fmt(Math.max(...ts)) : "No records yet";
+    return `<button class="folder" data-k="${esc(k)}">
+      <div class="ftop"><div class="ficon">${I.folder}</div><div><div class="fn">${esc(fname(k))}</div><div class="meta">${esc(when)}</div></div></div>
+      <div class="bar">${segs}</div>
+      <div class="chips">${chips || '<span class="meta">Empty folder</span>'}</div>
+      <div class="fbot"><span><b>${list.length}</b> record${list.length===1?"":"s"}</span><span>${esc(testers.slice(0,3).join(", "))}${testers.length>3?" +"+(testers.length-3):""}</span></div>
+    </button>`;
+  }).join("");
+}
+$("fq").addEventListener("input", renderFolders);
+$("folders").addEventListener("click", e => {
+  const b = e.target.closest(".folder"); if (!b) return;
+  openFolder = b.dataset.k; statusFilter = ""; render();
+});
+
+function thumbStrip(x){
+  const a = x.attachments || [];
+  if (!a.length) return '<span class="noshot">—</span>';
+  const cells = a.slice(0,3).map((i,idx) => {
+    const more = (idx===2 && a.length>3) ? `<span class="more">+${a.length-3}</span>` : "";
+    if (isPdf(i)) return `<div class="tcell">PDF${more}</div>`;
+    const url = thumbs[i.path];
+    return `<div class="tcell">${url?`<img loading="lazy" src="${esc(url)}" alt="">`:""}${more}</div>`;
+  });
+  return `<div class="strip">${cells.join("")}</div>`;
+}
+
+function renderFolder(){
+  const all = inFolder();
+  all.forEach((x,i) => x._no = i+1);
+  const n = {pass:0,fail:0,blocked:0,pending:0};
+  all.forEach(x => n[x.status]++);
+  const stat = (k, num, label, on) => `<button class="sum k-${k} ${on?"on":""}" data-s="${k==="all"?"":k}"><b>${num}</b><span>${label}</span></button>`;
+  $("summary").innerHTML = stat("all", all.length, "All records", !statusFilter) +
+    ["pass","fail","blocked","pending"].map(s => stat(s, n[s], LABEL[s], statusFilter===s)).join("");
+  const q = $("q").value.trim().toLowerCase();
+  const rows = all.filter(x => (!statusFilter || x.status===statusFilter) &&
+    (!q || [x.title,x.actual,x.tester].join(" ").toLowerCase().includes(q)));
+  if (!rows.length){
+    $("list").innerHTML = `<div class="emptycard"><div class="ficon">${I.folder}</div><h3>${all.length ? "No records match" : "This folder is empty"}</h3><p>${all.length ? "Try another filter or search." : "Add a record for each view you tested in this round."}</p>${all.length ? "" : `<button class="btn primary" id="emptyRec">${I.plus}Add first record</button>`}</div>`;
+    if (!all.length) $("emptyRec").onclick = () => openCase(null);
+    return;
+  }
+  $("list").innerHTML = `<div class="card"><table>
+    <thead><tr><th>No.</th><th>View</th><th>What was updated</th><th class="hide-m">Tested by</th><th class="hide-m">Tested at</th><th>Result</th><th class="hide-m">Screenshots</th></tr></thead>
+    <tbody>` + rows.map(x => `
+    <tr class="row" data-id="${x.id}" tabindex="0">
+      <td class="c-no">${x._no}</td>
+      <td class="c-view">${esc(x.title)}</td>
+      <td class="c-note">${x.actual?esc(x.actual):'<span class="noshot">—</span>'}</td>
+      <td class="hide-m">${x.tester?`<span class="by"><span class="av">${esc(x.tester.trim()[0].toUpperCase())}</span>${esc(x.tester)}</span>`:""}</td>
+      <td class="c-when hide-m">${esc(fmt(x.tested_at||x.updated_at))}</td>
+      <td><span class="pill ${x.status}">${LABEL[x.status]}</span></td>
+      <td class="hide-m">${thumbStrip(x)}</td>
+    </tr>`).join("") + `</tbody></table></div>`;
+}
+$("summary").addEventListener("click", e => {
+  const b = e.target.closest(".sum"); if(!b) return;
+  const s = b.dataset.s;
+  statusFilter = (s && statusFilter===s) ? "" : s; renderFolder();
+});
+$("list").addEventListener("click", e => { const r=e.target.closest(".row"); if(r) openCase(+r.dataset.id); });
+$("list").addEventListener("keydown", e => { if(e.key==="Enter"){ const r=e.target.closest(".row"); if(r) openCase(+r.dataset.id);} });
+$("q").addEventListener("input", renderFolder);
+$("refresh").addEventListener("click", load);
+
+// ---------- folder actions ----------
+async function newFolder(){
+  const def = toLocalInput(new Date()).slice(0,10);
+  const name = await ask({title:"New folder", message:"Name the folder with the test date.", input:def, placeholder:"e.g. 2026-11-18", ok:"Create", selectAll:true});
+  if (!name) return;
+  if (!cases.some(x=>x.round===name) && !draftFolders.includes(name)) draftFolders.push(name);
+  openFolder = name; statusFilter = ""; render();
+}
+async function renameFolder(){
+  const old = openFolder;
+  const name = await ask({title:"Rename folder", input:old===NONE?"":old, ok:"Rename", selectAll:true});
+  if (!name || name === old) return;
+  let q = sb.from(TABLE).update({round:name});
+  q = old === NONE ? q.is("round", null) : q.eq("round", old);
+  const r = await q;
+  if (r.error){ toast("Rename failed: "+r.error.message); return; }
+  draftFolders = draftFolders.map(n => n===old ? name : n);
+  openFolder = name; await load();
+}
+async function deleteFolder(){
+  const list = inFolder();
+  if (!await ask({title:"Delete folder?", message:`"${fname(openFolder)}" with ${list.length} record(s) and all their files will be deleted. This cannot be undone.`, ok:"Delete", danger:true})) return;
+  const paths = list.flatMap(x => (x.attachments||[]).map(a=>a.path));
+  if (paths.length) await sb.storage.from(BUCKET).remove(paths);
+  if (list.length){
+    const r = await sb.from(TABLE).delete().in("id", list.map(x=>x.id));
+    if (r.error){ toast("Delete failed: "+r.error.message); return; }
+  }
+  draftFolders = draftFolders.filter(n => n!==openFolder);
+  openFolder = null; toast("Folder deleted"); load();
+}
+
+// ---------- record dialog ----------
+async function openCase(id){
+  const c = id ? cases.find(x=>x.id===id) : null;
+  cur = {id, atts:[...(c?.attachments||[])], urls:{}, pending:[]};
+  $("dtitle").textContent = id ? `Record #${c._no}` : "New record";
+  $("fView").value = c?.title || "";
+  $("fStatus").value = c?.status || "pending";
+  $("fTester").value = c ? (c.tester||"") : (localStorage.getItem("lltest_name") || "");
+  $("fWhen").value = toLocalInput(new Date(c ? (c.tested_at||c.updated_at||Date.now()) : Date.now()));
+  $("fNote").value = c?.actual || "";
+  $("delBtn").style.visibility = id ? "visible" : "hidden";
+  drawThumbs();
+  $("dlg").showModal();
+  $("drop").focus();
+  if (cur.atts.length){
+    const mine = cur;
+    const urls = await signUrls(cur.atts.map(a=>a.path));
+    if (cur === mine){ cur.urls = urls; drawThumbs(); }
+  }
+}
+$("dclose").addEventListener("click", () => $("dlg").close());
+$("dlg").addEventListener("close", () => { cur?.pending.forEach(p=>URL.revokeObjectURL(p.url)); cur=null; });
+
+function drawThumbs(){
+  if(!cur) return;
+  const saved = cur.atts.map((a,i) => {
+    const url = cur.urls[a.path] || "";
+    const x = `<button class="x" data-del="${i}" aria-label="Remove file">×</button>`;
+    return isPdf(a)
+      ? `<div class="th" data-open="${esc(url)}" data-name="${esc(a.name)}" data-pdf="1"><div class="pdf"><b>PDF</b>${esc(a.name)}</div>${x}</div>`
+      : `<div class="th" data-open="${esc(url)}" data-name="${esc(a.name)}">${url?`<img loading="lazy" src="${esc(url)}" alt="${esc(a.name)}">`:""}${x}</div>`;
+  });
+  const pend = cur.pending.map((p,i) => {
+    const pdf = p.file.type.includes("pdf");
+    return `<div class="th" data-open="${p.url}" data-name="${esc(p.file.name)}" ${pdf?'data-pdf="1"':""}>${pdf?`<div class="pdf"><b>PDF</b>${esc(p.file.name)}</div>`:`<img src="${p.url}" alt="">`}<span class="tag">not saved</span><button class="x" data-rm="${i}" aria-label="Remove file">×</button></div>`;
+  });
+  $("thumbs").innerHTML = saved.concat(pend).join("");
+}
+
+async function persistAtts(){
+  const r = await sb.from(TABLE).update({attachments:cur.atts, updated_at:new Date().toISOString()}).eq("id",cur.id);
+  if (r.error) toast("Could not save file list: "+r.error.message);
+}
+
+$("dlg").addEventListener("click", async e => {
+  const del = e.target.closest("[data-del]"), rm = e.target.closest("[data-rm]");
+  if (del){
+    e.stopPropagation();
+    if(!await ask({title:"Remove this file?", ok:"Remove", danger:true})) return;
+    const [a] = cur.atts.splice(+del.dataset.del,1);
+    await sb.storage.from(BUCKET).remove([a.path]);
+    await persistAtts(); drawThumbs(); load(); return;
+  }
+  if (rm){ e.stopPropagation(); const [p]=cur.pending.splice(+rm.dataset.rm,1); URL.revokeObjectURL(p.url); drawThumbs(); return; }
+  const t = e.target.closest(".th"); if(t && t.dataset.open){
+    if (t.dataset.pdf){ window.open(t.dataset.open,"_blank","noopener"); return; }
+    $("lbimg").src = t.dataset.open; $("lbname").textContent = t.dataset.name;
+    $("lbopen").href = t.dataset.open; $("lb").showModal(); return;
+  }
+  if (e.target.closest("#drop")) $("file").click();
+});
+$("lbclose").addEventListener("click", e => { e.preventDefault(); $("lb").close(); });
+$("lb").addEventListener("click", e => { if(e.target===$("lb")) $("lb").close(); });
+
+// ---------- adding files ----------
+const drop = $("drop");
+drop.addEventListener("keydown", e => { if(e.key==="Enter"||e.key===" "){ e.preventDefault(); $("file").click(); }});
+["dragenter","dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", e => addFiles([...e.dataTransfer.files]));
+$("file").addEventListener("change", e => { addFiles([...e.target.files]); e.target.value=""; });
+document.addEventListener("paste", e => {
+  if (!$("dlg").open || $("lb").open || $("adlg").open) return;
+  const files = [...(e.clipboardData?.files||[])];
+  if (!files.length) return;
+  e.preventDefault();
+  addFiles(files);
+});
+
+async function addFiles(files){
+  if(!cur) return;
+  const ok = files.filter(f => /^image\/(png|jpe?g|webp)$/.test(f.type) || f.type==="application/pdf");
+  if (ok.length < files.length) toast("Only PNG, JPG and PDF files are supported.");
+  const small = ok.filter(f => f.size <= MAX_MB*1024*1024);
+  if (small.length < ok.length) toast(`Files over ${MAX_MB} MB were skipped.`);
+  const named = small.map(f => /^image\.(png|jpe?g)$/i.test(f.name)
+    ? new File([f], `screenshot-${new Date().toISOString().replace(/[:.]/g,"-")}.${f.type==="image/png"?"png":"jpg"}`, {type:f.type}) : f);
+  if (!named.length) return;
+  if (!cur.id){
+    named.forEach(f => cur.pending.push({file:f, url:URL.createObjectURL(f)}));
+    drawThumbs(); return;
+  }
+  const mine = cur;
+  const added = await uploadFiles(mine.id, named);
+  if (!added.length) return;
+  mine.atts.push(...added);
+  await signUrls(added.map(a=>a.path)).then(u => Object.assign(mine.urls, u));
+  await persistAtts();
+  if (cur === mine) drawThumbs();
+  load();
+}
+
+async function uploadFiles(caseId, files){
+  const done = [];
+  for (const f of files){
+    const safe = f.name.replace(/[^\w.\-]+/g,"_");
+    const path = `${caseId}/${Date.now()}-${Math.random().toString(36).slice(2,7)}-${safe}`;
+    const up = await sb.storage.from(BUCKET).upload(path, f, {contentType:f.type, upsert:false});
+    if (up.error){ toast("Upload failed: "+up.error.message); continue; }
+    done.push({path, name:f.name, mime:f.type});
+  }
+  return done;
+}
+
+// ---------- save / delete record ----------
+$("saveBtn").addEventListener("click", async () => {
+  const title = $("fView").value.trim();
+  if (!title){ toast("Please enter the view."); $("fView").focus(); return; }
+  const tester = $("fTester").value.trim();
+  if (!tester){ toast("Please enter who tested it."); $("fTester").focus(); return; }
+  const when = $("fWhen").value ? new Date($("fWhen").value).toISOString() : new Date().toISOString();
+  const row = {
+    round: openFolder === NONE ? null : openFolder,
+    title, tester, tested_at: when,
+    status: $("fStatus").value,
+    actual: $("fNote").value.trim() || null,
+    updated_at: new Date().toISOString()
+  };
+  $("saveBtn").disabled = true;
+  let id = cur.id;
+  if (id){
+    const r = await sb.from(TABLE).update(row).eq("id",id);
+    if (r.error){ toast("Save failed: "+r.error.message); $("saveBtn").disabled=false; return; }
+  } else {
+    const r = await sb.from(TABLE).insert(row).select("id").single();
+    if (r.error){ toast("Save failed: "+r.error.message); $("saveBtn").disabled=false; return; }
+    id = r.data.id;
+    const added = await uploadFiles(id, cur.pending.map(p=>p.file));
+    if (added.length){
+      const u = await sb.from(TABLE).update({attachments:added}).eq("id",id);
+      if (u.error) toast("Could not save file list: "+u.error.message);
+    }
+  }
+  localStorage.setItem("lltest_name", tester);
+  $("saveBtn").disabled = false;
+  $("dlg").close(); toast("Saved"); load();
+});
+
+$("delBtn").addEventListener("click", async () => {
+  if (!cur?.id || !await ask({title:"Delete this record?", message:"The record and all its files will be deleted.", ok:"Delete", danger:true})) return;
+  const paths = cur.atts.map(a=>a.path);
+  if (paths.length) await sb.storage.from(BUCKET).remove(paths);
+  const r = await sb.from(TABLE).delete().eq("id",cur.id);
+  if (r.error){ toast("Delete failed: "+r.error.message); return; }
+  $("dlg").close(); toast("Deleted"); load();
+});
+</script>
+</body>
+</html>
