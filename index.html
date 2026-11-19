@@ -39,7 +39,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 [hidden]{display:none!important}
 svg{flex:none}
-.wrap{max-width:1180px;margin:0 auto;padding:0 20px 60px}
+.wrap{max-width:1400px;margin:0 auto;padding:0 20px 60px}
 
 /* top bar */
 .top{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);margin:0 -20px 22px;padding:14px 20px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
@@ -125,15 +125,22 @@ tr.row:hover td{background:var(--panel2)}
 .c-no{color:var(--muted);font-variant-numeric:tabular-nums;width:56px}
 .c-view{font-weight:600;min-width:180px}
 .c-view small{display:block;font-weight:400;color:var(--muted);font-size:13px;max-width:320px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.c-note{min-width:220px;max-width:420px;white-space:pre-wrap;word-break:break-word;font-size:14px}
+.c-note{min-width:200px;max-width:320px;white-space:pre-wrap;word-break:break-word;font-size:14px}
 .c-when{font-size:13px;color:var(--muted);white-space:nowrap}
 .by{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
 .av{width:26px;height:26px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
 .strip{display:flex;gap:6px}
-.tcell{position:relative;width:76px;height:54px;border:1px solid var(--line);border-radius:6px;background:var(--panel2);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--fail)}
+.tcell{position:relative;width:84px;height:60px;padding:0;border:1px solid var(--line);border-radius:6px;background:var(--panel2);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--fail);cursor:zoom-in}
+.tcell[data-ver="old"]{border-color:var(--block)}
+.tcell[data-ver="new"]{border-color:var(--accent)}
+.tcell:hover{box-shadow:0 0 0 2px var(--accent-soft),var(--shadow)}
 .tcell img{width:100%;height:100%;object-fit:cover}
 .tcell .more{position:absolute;right:3px;bottom:3px;background:rgba(0,0,0,.7);color:#fff;border-radius:4px;font-size:11px;padding:0 5px}
 .noshot{color:var(--muted);font-size:13px}
+.utag{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.mvrow{display:flex;gap:4px}
+.mvb{border:1px solid var(--line);background:var(--panel);border-radius:5px;font-size:11px;font-weight:600;padding:1px 8px;cursor:pointer}
+.mvb:hover{border-color:var(--accent);color:var(--accent)}
 
 /* dialogs */
 dialog{border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--ink);padding:0;width:min(720px,94vw);max-height:92vh;box-shadow:0 20px 60px rgba(0,0,0,.35)}
@@ -154,7 +161,67 @@ label{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-bot
 .th .pdf b{display:block;font-size:20px;color:var(--fail)}
 .th .x{position:absolute;top:5px;right:5px;background:rgba(0,0,0,.7);color:#fff;border:0;border-radius:6px;width:26px;height:26px;cursor:pointer;line-height:1;font-size:16px}
 .th .x:hover{background:var(--fail)}
-.th .tag{position:absolute;left:5px;bottom:5px;background:rgba(0,0,0,.7);color:#fff;border-radius:4px;font-size:11px;padding:1px 6px}
+.th .tag{position:absolute;left:5px;top:5px;background:rgba(0,0,0,.7);color:#fff;border-radius:4px;font-size:11px;padding:1px 6px}
+#dlg{width:min(900px,95vw)}
+.vers{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.vcol{min-width:0}
+.vcol label{display:flex;align-items:center;gap:8px}
+.vtag{display:inline-flex;align-items:center;font-weight:600;font-size:13px;border-radius:6px;padding:2px 9px}
+.vtag.old{background:var(--block-bg);color:var(--block)}
+.vtag.new{background:var(--accent-soft);color:var(--accent)}
+.vtag.none{background:var(--pend-bg);color:var(--pend)}
+.vcol.old .drop{border-color:var(--block);background:var(--block-bg)}
+.drop.active{border-style:solid;outline:3px solid color-mix(in srgb,var(--accent) 35%,transparent);outline-offset:0}
+.vcol.old .drop.active{outline-color:color-mix(in srgb,var(--block) 40%,transparent)}
+.drop .hint{display:block;margin-top:4px;font-size:13px}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent);text-decoration:underline;cursor:pointer}
+.th .mvs{position:absolute;left:0;right:0;bottom:0;display:flex;gap:1px}
+.th .mvs button{flex:1;border:0;background:rgba(0,0,0,.72);color:#fff;font-size:11px;padding:4px;cursor:pointer}
+.th .mvs button:hover{background:var(--accent);color:var(--accent-ink)}
+
+/* inline result select */
+.stwrap{position:relative;display:inline-flex;align-items:center;border-radius:999px}
+.stwrap.pass{background:var(--pass-bg);color:var(--pass)}
+.stwrap.fail{background:var(--fail-bg);color:var(--fail)}
+.stwrap.blocked{background:var(--block-bg);color:var(--block)}
+.stwrap.pending{background:var(--pend-bg);color:var(--pend)}
+.stwrap:hover{box-shadow:0 0 0 2px color-mix(in srgb,currentColor 35%,transparent)}
+.stwrap svg{position:absolute;right:9px;pointer-events:none}
+.stsel{appearance:none;-webkit-appearance:none;background:transparent;color:inherit;border:0;border-radius:999px;padding:4px 28px 4px 12px;width:auto;font-size:13px;font-weight:600;cursor:pointer}
+.stsel option{color:var(--ink);background:var(--panel)}
+
+/* compare viewer */
+#cv{width:min(1680px,97vw);max-height:95vh;overflow:hidden}
+.cvhead{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line)}
+.cvt{min-width:0;flex:1 1 280px}
+.cvt h2{margin:0;font-size:17px;font-weight:700}
+.cvnote{font-size:14px;color:var(--ink);white-space:pre-wrap;word-break:break-word;max-height:3.2em;overflow:auto}
+.cvmeta{font-size:13px;color:var(--muted)}
+.cvact{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.cvpanes{display:grid;gap:1px;background:var(--line);height:calc(95vh - 112px)}
+.pane{background:var(--panel);display:flex;flex-direction:column;min-width:0;min-height:0}
+.pane header{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line);font-size:13px;flex-wrap:wrap}
+.pane header .sp{flex:1}
+.pane header a{color:var(--accent)}
+.pane .nav{display:inline-flex;align-items:center;gap:6px;color:var(--muted)}
+.pane .nav button,.pane .pt button{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:1px 9px;cursor:pointer;font-size:13px}
+.pane .nav button:disabled{opacity:.4;cursor:default}
+.pane .nav button:not(:disabled):hover,.pane .pt button:hover{border-color:var(--accent);color:var(--accent)}
+.pane .pt{display:inline-flex;gap:6px}
+.stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:#0b1116;padding:8px;overflow:auto}
+.stage img{max-width:100%;max-height:100%;object-fit:contain;background:#fff;cursor:zoom-in}
+.stage.fitw{display:block}
+.stage.fitw img{max-width:none;max-height:none;width:100%;height:auto;cursor:zoom-out}
+.stage .empty{color:#9aa9b6;text-align:center;display:grid;gap:6px;justify-items:center;padding:20px}
+.stage .empty b{font-size:22px;color:#ff8f86}
+.stage .empty a{color:#8fd3e6}
+.pfoot{padding:6px 12px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:28px}
+@media (max-width:900px){
+  .vers{grid-template-columns:1fr}
+  #cv{overflow:auto}
+  .cvpanes{grid-template-columns:1fr!important;height:auto}
+  .stage{height:62vh;flex:none}
+}
 #adlg{width:min(440px,94vw)}
 #adlg .dbody{gap:10px}
 #aMsg{margin:0;color:var(--muted);font-size:14px}
@@ -234,10 +301,21 @@ label{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-bot
       <div><label for="fWhen">Tested at</label><input id="fWhen" type="datetime-local"></div>
     </div>
     <div><label for="fNote">What was updated</label><textarea id="fNote" placeholder="Explain what changed in this view, and what the screenshot shows"></textarea></div>
-    <div>
-      <label>Screenshots</label>
-      <div class="drop" id="drop" tabindex="0"><b>Click here, then Ctrl+V</b> to paste a screenshot<br>or drop / click to choose PNG, JPG, PDF</div>
-      <div class="thumbs" id="thumbs"></div>
+    <div class="vers">
+      <div class="vcol old">
+        <label><span class="vtag old">Old version</span>before the update</label>
+        <div class="drop" id="dropOld" data-ver="old" tabindex="0"><b>Click here, then Ctrl+V</b> to paste the old screenshot<span class="hint">or drop files, or <button type="button" class="linkbtn" data-choose>choose PNG, JPG, PDF</button></span></div>
+        <div class="thumbs" id="thumbsOld"></div>
+      </div>
+      <div class="vcol new">
+        <label><span class="vtag new">New version</span>after the update</label>
+        <div class="drop" id="dropNew" data-ver="new" tabindex="0"><b>Click here, then Ctrl+V</b> to paste the new screenshot<span class="hint">or drop files, or <button type="button" class="linkbtn" data-choose>choose PNG, JPG, PDF</button></span></div>
+        <div class="thumbs" id="thumbsNew"></div>
+      </div>
+    </div>
+    <div id="unsortedBox" hidden>
+      <label><span class="vtag none">Unsorted</span>Pick Old or New for each screenshot</label>
+      <div class="thumbs" id="thumbsNone"></div>
     </div>
     <input type="file" id="file" accept="image/png,image/jpeg,image/webp,application/pdf" multiple hidden>
   </div>
@@ -250,6 +328,15 @@ label{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-bot
 <dialog id="lb">
   <div class="lbbar"><span id="lbname"></span><span><a id="lbopen" target="_blank" rel="noopener">Open original</a> &nbsp; <a href="#" id="lbclose">Close</a></span></div>
   <img id="lbimg" alt="">
+</dialog>
+
+<!-- Old vs New compare viewer -->
+<dialog id="cv">
+  <div class="cvhead">
+    <div class="cvt"><h2 id="cvTitle"></h2><div class="cvnote" id="cvNote"></div><div class="cvmeta" id="cvMeta"></div></div>
+    <div class="cvact" id="cvAct"></div>
+  </div>
+  <div class="cvpanes" id="cvpanes"></div>
 </dialog>
 
 <!-- Name / confirm dialog -->
@@ -292,7 +379,8 @@ const I = {
   back: ico('<path d="M15 6l-6 6 6 6"/>', 16),
   edit: ico('<path d="M4 20h4L19 9l-4-4L4 16z"/>', 16),
   trash: ico('<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>', 16),
-  out: ico('<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/>', 16)
+  out: ico('<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/>', 16),
+  chev: ico('<path d="m6 9 6 6 6-6"/>', 12)
 };
 
 let cases = [], thumbs = {}, statusFilter = "";
@@ -374,9 +462,9 @@ async function load(){
   draftFolders = draftFolders.filter(n => !cases.some(x => x.round === n));
   render();
   const paths = [];
-  cases.forEach(x => (x.attachments||[]).filter(a=>!isPdf(a)).slice(0,3).forEach(a => paths.push(a.path)));
+  cases.forEach(x => (x.attachments||[]).forEach(a => paths.push(a.path)));
   thumbs = await signUrls(paths);
-  render();
+  refreshViews();
 }
 
 // ---------- render ----------
@@ -447,14 +535,25 @@ $("folders").addEventListener("click", e => {
   openFolder = b.dataset.k; statusFilter = ""; render();
 });
 
-function thumbStrip(x){
-  const a = x.attachments || [];
-  if (!a.length) return '<span class="noshot">—</span>';
-  const cells = a.slice(0,3).map((i,idx) => {
-    const more = (idx===2 && a.length>3) ? `<span class="more">+${a.length-3}</span>` : "";
-    if (isPdf(i)) return `<div class="tcell">PDF${more}</div>`;
-    const url = thumbs[i.path];
-    return `<div class="tcell">${url?`<img loading="lazy" src="${esc(url)}" alt="">`:""}${more}</div>`;
+const verOf = a => (a.version === "old" || a.version === "new") ? a.version : "none";
+function groups(x){
+  const g = {old:[], new:[], none:[]};
+  (x.attachments||[]).forEach((a,i) => g[verOf(a)].push({...a, _i:i}));
+  return g;
+}
+function statusSelect(x){
+  const opts = ["pending","pass","fail","blocked"].map(s => `<option value="${s}"${s===x.status?" selected":""}>${LABEL[s]}</option>`).join("");
+  return `<span class="stwrap ${x.status}"><select class="stsel" data-id="${x.id}" aria-label="Result">${opts}</select>${I.chev}</span>`;
+}
+function verCell(x, g, ver){
+  const list = g[ver];
+  if (!list.length) return '<span class="noshot">—</span>';
+  const cells = list.slice(0,2).map((a,idx) => {
+    const more = (idx===1 && list.length>2) ? `<span class="more">+${list.length-2}</span>` : "";
+    const inner = isPdf(a) ? "PDF" : (thumbs[a.path] ? `<img loading="lazy" src="${esc(thumbs[a.path])}" alt="">` : "");
+    const cell = `<button type="button" class="tcell" data-case="${x.id}" data-ver="${ver}" data-i="${idx}" title="${esc(a.name)}" aria-label="Compare old and new screenshots">${inner}${more}</button>`;
+    if (ver !== "none") return cell;
+    return `<div class="utag">${cell}<div class="mvrow"><button type="button" class="mvb" data-tagcase="${x.id}" data-tagi="${a._i}" data-to="old">Old</button><button type="button" class="mvb" data-tagcase="${x.id}" data-tagi="${a._i}" data-to="new">New</button></div></div>`;
   });
   return `<div class="strip">${cells.join("")}</div>`;
 }
@@ -475,26 +574,140 @@ function renderFolder(){
     if (!all.length) $("emptyRec").onclick = () => openCase(null);
     return;
   }
+  const hasNone = rows.some(x => (x.attachments||[]).some(a => verOf(a) === "none"));
   $("list").innerHTML = `<div class="card"><table>
-    <thead><tr><th>No.</th><th>View</th><th>What was updated</th><th class="hide-m">Tested by</th><th class="hide-m">Tested at</th><th>Result</th><th class="hide-m">Screenshots</th></tr></thead>
-    <tbody>` + rows.map(x => `
+    <thead><tr><th>No.</th><th>View</th><th>What was updated</th><th class="hide-m">Tested by</th><th class="hide-m">Tested at</th><th>Result</th><th><span class="vtag old">Old version</span></th><th><span class="vtag new">New version</span></th>${hasNone ? '<th><span class="vtag none">Unsorted</span></th>' : ""}</tr></thead>
+    <tbody>` + rows.map(x => {
+    const g = groups(x);
+    return `
     <tr class="row" data-id="${x.id}" tabindex="0">
       <td class="c-no">${x._no}</td>
       <td class="c-view">${esc(x.title)}</td>
       <td class="c-note">${x.actual?esc(x.actual):'<span class="noshot">—</span>'}</td>
       <td class="hide-m">${x.tester?`<span class="by"><span class="av">${esc(x.tester.trim()[0].toUpperCase())}</span>${esc(x.tester)}</span>`:""}</td>
       <td class="c-when hide-m">${esc(fmt(x.tested_at||x.updated_at))}</td>
-      <td><span class="pill ${x.status}">${LABEL[x.status]}</span></td>
-      <td class="hide-m">${thumbStrip(x)}</td>
-    </tr>`).join("") + `</tbody></table></div>`;
+      <td>${statusSelect(x)}</td>
+      <td>${verCell(x, g, "old")}</td>
+      <td>${verCell(x, g, "new")}</td>
+      ${hasNone ? `<td>${verCell(x, g, "none")}</td>` : ""}
+    </tr>`;
+  }).join("") + `</tbody></table></div>`;
 }
 $("summary").addEventListener("click", e => {
   const b = e.target.closest(".sum"); if(!b) return;
   const s = b.dataset.s;
   statusFilter = (s && statusFilter===s) ? "" : s; renderFolder();
 });
-$("list").addEventListener("click", e => { const r=e.target.closest(".row"); if(r) openCase(+r.dataset.id); });
-$("list").addEventListener("keydown", e => { if(e.key==="Enter"){ const r=e.target.closest(".row"); if(r) openCase(+r.dataset.id);} });
+$("list").addEventListener("click", e => {
+  const t = e.target.closest(".tcell");
+  if (t){ openViewer(+t.dataset.case, t.dataset.ver, +t.dataset.i); return; }
+  const m = e.target.closest(".mvb");
+  if (m){ setVersion(+m.dataset.tagcase, +m.dataset.tagi, m.dataset.to); return; }
+  if (e.target.closest(".stwrap")) return;
+  const r = e.target.closest(".row"); if (r) openCase(+r.dataset.id);
+});
+$("list").addEventListener("keydown", e => {
+  if (e.key === "Enter" && e.target.classList.contains("row")) openCase(+e.target.dataset.id);
+});
+
+// ---------- change result / tag Old-New straight from the list ----------
+function refreshViews(){ render(); if (vw && $("cv").open) renderViewer(); }
+
+async function setStatus(id, status){
+  const x = cases.find(c => c.id === id);
+  if (!x || x.status === status) return;
+  const prev = x.status;
+  x.status = status; refreshViews();
+  const r = await sb.from(TABLE).update({status, updated_at:new Date().toISOString()}).eq("id", id);
+  if (r.error){ x.status = prev; refreshViews(); toast("Could not change result: "+r.error.message); return; }
+  toast("Result: "+LABEL[status]);
+}
+document.addEventListener("change", e => {
+  const s = e.target.closest?.(".stsel");
+  if (s) setStatus(+s.dataset.id, s.value);
+});
+
+async function setVersion(id, i, v){
+  const x = cases.find(c => c.id === id);
+  if (!x || !(x.attachments||[])[i]) return;
+  const before = x.attachments;
+  const atts = before.map(a => ({...a}));
+  atts[i].version = v;
+  x.attachments = atts; refreshViews();
+  const r = await sb.from(TABLE).update({attachments:atts, updated_at:new Date().toISOString()}).eq("id", id);
+  if (r.error){ x.attachments = before; refreshViews(); toast("Could not save: "+r.error.message); }
+}
+
+// ---------- Old vs New compare viewer ----------
+let vw = null;
+const VNAME = {old:"Old version", new:"New version", none:"Unsorted"};
+function openViewer(id, ver, i){
+  if (!cases.some(c => c.id === id)) return;
+  vw = {id, i:{old:0, new:0, none:0}, fit:false};
+  vw.i[ver] = i;
+  renderViewer();
+  if (!$("cv").open) $("cv").showModal();
+}
+function renderViewer(){
+  const x = vw && cases.find(c => c.id === vw.id);
+  if (!x){ $("cv").close(); return; }
+  const g = groups(x);
+  $("cvTitle").textContent = x.title;
+  $("cvNote").textContent = x.actual || "";
+  $("cvNote").hidden = !x.actual;
+  $("cvMeta").textContent = [x.tester, fmt(x.tested_at||x.updated_at)].filter(Boolean).join(" · ");
+  $("cvAct").innerHTML = `${statusSelect(x)}<button type="button" class="btn" data-act="fit">${vw.fit ? "Fit to screen" : "Fit width"}</button><button type="button" class="btn" data-act="edit">${I.edit}Edit record</button><button type="button" class="btn ghost" data-act="close">Close</button>`;
+  const panes = ["old","new"].concat(g.none.length ? ["none"] : []);
+  $("cvpanes").style.gridTemplateColumns = `repeat(${panes.length},minmax(0,1fr))`;
+  $("cvpanes").innerHTML = panes.map(v => {
+    const list = g[v];
+    vw.i[v] = Math.min(Math.max(vw.i[v], 0), Math.max(list.length-1, 0));
+    const a = list[vw.i[v]];
+    const url = a ? (thumbs[a.path] || "") : "";
+    let stage;
+    if (!a) stage = `<div class="empty">No ${v} version screenshot yet</div>`;
+    else if (isPdf(a)) stage = `<div class="empty"><b>PDF</b><span>${esc(a.name)}</span>${url ? `<a href="${esc(url)}" target="_blank" rel="noopener">Open PDF</a>` : ""}</div>`;
+    else stage = url ? `<img src="${esc(url)}" alt="${esc(a.name)}">` : `<div class="empty">Loading…</div>`;
+    const n = list.length, k = vw.i[v];
+    const nav = n > 1 ? `<span class="nav"><button type="button" data-vnav="${v}" data-d="-1" aria-label="Previous"${k===0?" disabled":""}>‹</button>${k+1} / ${n}<button type="button" data-vnav="${v}" data-d="1" aria-label="Next"${k===n-1?" disabled":""}>›</button></span>` : "";
+    const tag = (v === "none" && a) ? `<span class="pt"><button type="button" data-vtag="${a._i}" data-to="old">Set as Old</button><button type="button" data-vtag="${a._i}" data-to="new">Set as New</button></span>` : "";
+    const open = url ? `<a href="${esc(url)}" target="_blank" rel="noopener">Open original</a>` : "";
+    return `<section class="pane ${v}"><header><span class="vtag ${v}">${VNAME[v]}</span>${nav}<span class="sp"></span>${tag}${open}</header><div class="stage${vw.fit?" fitw":""}">${stage}</div><div class="pfoot">${a ? esc(a.name) : ""}</div></section>`;
+  }).join("");
+  if (vw.fit){
+    const st = [...$("cvpanes").querySelectorAll(".stage")];
+    let lock = false;
+    st.forEach(s => s.addEventListener("scroll", () => {
+      if (lock) return; lock = true;
+      st.forEach(o => { if (o !== s) o.scrollTop = s.scrollTop; });
+      requestAnimationFrame(() => { lock = false; });
+    }));
+  }
+}
+function stepViewer(d){
+  const x = vw && cases.find(c => c.id === vw.id); if (!x) return;
+  const g = groups(x);
+  ["old","new","none"].forEach(v => { if (g[v].length > 1) vw.i[v] += d; });
+  renderViewer();
+}
+$("cv").addEventListener("click", e => {
+  if (e.target === $("cv")){ $("cv").close(); return; }
+  if (!vw) return;
+  if (e.target.closest(".stage img")){ vw.fit = !vw.fit; renderViewer(); return; }
+  const b = e.target.closest("[data-act],[data-vnav],[data-vtag]"); if (!b) return;
+  if (b.dataset.vnav){ vw.i[b.dataset.vnav] += +b.dataset.d; renderViewer(); return; }
+  if (b.dataset.vtag){ setVersion(vw.id, +b.dataset.vtag, b.dataset.to); return; }
+  const act = b.dataset.act;
+  if (act === "close") $("cv").close();
+  else if (act === "fit"){ vw.fit = !vw.fit; renderViewer(); }
+  else if (act === "edit"){ const id = vw.id; $("cv").close(); openCase(id); }
+});
+$("cv").addEventListener("keydown", e => {
+  if (!vw || e.target.tagName === "SELECT") return;
+  if (e.key === "ArrowRight") stepViewer(1);
+  else if (e.key === "ArrowLeft") stepViewer(-1);
+});
+$("cv").addEventListener("close", () => { vw = null; });
 $("q").addEventListener("input", renderFolder);
 $("refresh").addEventListener("click", load);
 
@@ -541,9 +754,11 @@ async function openCase(id){
   $("fWhen").value = toLocalInput(new Date(c ? (c.tested_at||c.updated_at||Date.now()) : Date.now()));
   $("fNote").value = c?.actual || "";
   $("delBtn").style.visibility = id ? "visible" : "hidden";
+  const hasOld = cur.atts.some(a => verOf(a) === "old"), hasNew = cur.atts.some(a => verOf(a) === "new");
+  setActive(hasOld && !hasNew ? "new" : "old");
   drawThumbs();
   $("dlg").showModal();
-  $("drop").focus();
+  (addVer === "new" ? $("dropNew") : $("dropOld")).focus();
   if (cur.atts.length){
     const mine = cur;
     const urls = await signUrls(cur.atts.map(a=>a.path));
@@ -555,18 +770,28 @@ $("dlg").addEventListener("close", () => { cur?.pending.forEach(p=>URL.revokeObj
 
 function drawThumbs(){
   if(!cur) return;
-  const saved = cur.atts.map((a,i) => {
+  const html = {old:[], new:[], none:[]};
+  cur.atts.forEach((a,i) => {
+    const g = verOf(a);
     const url = cur.urls[a.path] || "";
     const x = `<button class="x" data-del="${i}" aria-label="Remove file">×</button>`;
-    return isPdf(a)
-      ? `<div class="th" data-open="${esc(url)}" data-name="${esc(a.name)}" data-pdf="1"><div class="pdf"><b>PDF</b>${esc(a.name)}</div>${x}</div>`
-      : `<div class="th" data-open="${esc(url)}" data-name="${esc(a.name)}">${url?`<img loading="lazy" src="${esc(url)}" alt="${esc(a.name)}">`:""}${x}</div>`;
+    const mv = g === "none"
+      ? `<div class="mvs"><button type="button" data-mv="${i}" data-to="old">Old</button><button type="button" data-mv="${i}" data-to="new">New</button></div>`
+      : `<div class="mvs"><button type="button" data-mv="${i}" data-to="${g==="old"?"new":"old"}">Move to ${g==="old"?"New":"Old"}</button></div>`;
+    const inner = isPdf(a)
+      ? `<div class="pdf"><b>PDF</b>${esc(a.name)}</div>`
+      : (url ? `<img loading="lazy" src="${esc(url)}" alt="${esc(a.name)}">` : "");
+    html[g].push(`<div class="th" data-open="${esc(url)}" data-name="${esc(a.name)}"${isPdf(a)?' data-pdf="1"':""}>${inner}${x}${mv}</div>`);
   });
-  const pend = cur.pending.map((p,i) => {
+  cur.pending.forEach((p,i) => {
     const pdf = p.file.type.includes("pdf");
-    return `<div class="th" data-open="${p.url}" data-name="${esc(p.file.name)}" ${pdf?'data-pdf="1"':""}>${pdf?`<div class="pdf"><b>PDF</b>${esc(p.file.name)}</div>`:`<img src="${p.url}" alt="">`}<span class="tag">not saved</span><button class="x" data-rm="${i}" aria-label="Remove file">×</button></div>`;
+    const inner = pdf ? `<div class="pdf"><b>PDF</b>${esc(p.file.name)}</div>` : `<img src="${p.url}" alt="">`;
+    html[p.ver].push(`<div class="th" data-open="${p.url}" data-name="${esc(p.file.name)}"${pdf?' data-pdf="1"':""}>${inner}<span class="tag">not saved</span><button class="x" data-rm="${i}" aria-label="Remove file">×</button><div class="mvs"><button type="button" data-pmv="${i}">Move to ${p.ver==="old"?"New":"Old"}</button></div></div>`);
   });
-  $("thumbs").innerHTML = saved.concat(pend).join("");
+  $("thumbsOld").innerHTML = html.old.join("");
+  $("thumbsNew").innerHTML = html.new.join("");
+  $("thumbsNone").innerHTML = html.none.join("");
+  $("unsortedBox").hidden = !html.none.length;
 }
 
 async function persistAtts(){
@@ -584,46 +809,68 @@ $("dlg").addEventListener("click", async e => {
     await persistAtts(); drawThumbs(); load(); return;
   }
   if (rm){ e.stopPropagation(); const [p]=cur.pending.splice(+rm.dataset.rm,1); URL.revokeObjectURL(p.url); drawThumbs(); return; }
+  const mv = e.target.closest("[data-mv]"), pmv = e.target.closest("[data-pmv]");
+  if (mv){
+    e.stopPropagation();
+    const a = cur.atts[+mv.dataset.mv];
+    if (a){ a.version = mv.dataset.to; await persistAtts(); drawThumbs(); load(); }
+    return;
+  }
+  if (pmv){ e.stopPropagation(); const p = cur.pending[+pmv.dataset.pmv]; p.ver = p.ver === "old" ? "new" : "old"; drawThumbs(); return; }
+  const z = e.target.closest(".drop");
+  if (z){
+    setActive(z.dataset.ver);
+    if (e.target.closest("[data-choose]")) $("file").click();
+    return;
+  }
   const t = e.target.closest(".th"); if(t && t.dataset.open){
     if (t.dataset.pdf){ window.open(t.dataset.open,"_blank","noopener"); return; }
     $("lbimg").src = t.dataset.open; $("lbname").textContent = t.dataset.name;
     $("lbopen").href = t.dataset.open; $("lb").showModal(); return;
   }
-  if (e.target.closest("#drop")) $("file").click();
 });
 $("lbclose").addEventListener("click", e => { e.preventDefault(); $("lb").close(); });
 $("lb").addEventListener("click", e => { if(e.target===$("lb")) $("lb").close(); });
 
 // ---------- adding files ----------
-const drop = $("drop");
-drop.addEventListener("keydown", e => { if(e.key==="Enter"||e.key===" "){ e.preventDefault(); $("file").click(); }});
-["dragenter","dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
-["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
-drop.addEventListener("drop", e => addFiles([...e.dataTransfer.files]));
-$("file").addEventListener("change", e => { addFiles([...e.target.files]); e.target.value=""; });
+let addVer = "old";
+const zones = [$("dropOld"), $("dropNew")];
+function setActive(v){ addVer = v; zones.forEach(z => z.classList.toggle("active", z.dataset.ver === v)); }
+setActive("old");
+zones.forEach(z => {
+  z.addEventListener("focus", () => setActive(z.dataset.ver));
+  z.addEventListener("keydown", e => { if(e.key==="Enter"||e.key===" "){ e.preventDefault(); setActive(z.dataset.ver); $("file").click(); }});
+  ["dragenter","dragover"].forEach(ev => z.addEventListener(ev, e => { e.preventDefault(); z.classList.add("over"); }));
+  ["dragleave","drop"].forEach(ev => z.addEventListener(ev, e => { e.preventDefault(); z.classList.remove("over"); }));
+  z.addEventListener("drop", e => { setActive(z.dataset.ver); addFiles([...e.dataTransfer.files], z.dataset.ver); });
+});
+$("file").addEventListener("change", e => { addFiles([...e.target.files], addVer); e.target.value=""; });
 document.addEventListener("paste", e => {
   if (!$("dlg").open || $("lb").open || $("adlg").open) return;
   const files = [...(e.clipboardData?.files||[])];
   if (!files.length) return;
   e.preventDefault();
-  addFiles(files);
+  addFiles(files, addVer);
 });
 
-async function addFiles(files){
+async function addFiles(files, ver){
   if(!cur) return;
+  ver = ver === "new" ? "new" : "old";
   const ok = files.filter(f => /^image\/(png|jpe?g|webp)$/.test(f.type) || f.type==="application/pdf");
   if (ok.length < files.length) toast("Only PNG, JPG and PDF files are supported.");
   const small = ok.filter(f => f.size <= MAX_MB*1024*1024);
   if (small.length < ok.length) toast(`Files over ${MAX_MB} MB were skipped.`);
   const named = small.map(f => /^image\.(png|jpe?g)$/i.test(f.name)
-    ? new File([f], `screenshot-${new Date().toISOString().replace(/[:.]/g,"-")}.${f.type==="image/png"?"png":"jpg"}`, {type:f.type}) : f);
+    ? new File([f], `screenshot-${ver}-${new Date().toISOString().replace(/[:.]/g,"-")}.${f.type==="image/png"?"png":"jpg"}`, {type:f.type}) : f);
   if (!named.length) return;
+  const hasNew = cur.atts.some(a => verOf(a) === "new") || cur.pending.some(p => p.ver === "new");
+  if (ver === "old" && !hasNew) setActive("new");
   if (!cur.id){
-    named.forEach(f => cur.pending.push({file:f, url:URL.createObjectURL(f)}));
+    named.forEach(f => cur.pending.push({file:f, url:URL.createObjectURL(f), ver}));
     drawThumbs(); return;
   }
   const mine = cur;
-  const added = await uploadFiles(mine.id, named);
+  const added = await uploadFiles(mine.id, named.map(f => ({file:f, ver})));
   if (!added.length) return;
   mine.atts.push(...added);
   await signUrls(added.map(a=>a.path)).then(u => Object.assign(mine.urls, u));
@@ -632,14 +879,14 @@ async function addFiles(files){
   load();
 }
 
-async function uploadFiles(caseId, files){
+async function uploadFiles(caseId, items){
   const done = [];
-  for (const f of files){
+  for (const {file:f, ver} of items){
     const safe = f.name.replace(/[^\w.\-]+/g,"_");
     const path = `${caseId}/${Date.now()}-${Math.random().toString(36).slice(2,7)}-${safe}`;
     const up = await sb.storage.from(BUCKET).upload(path, f, {contentType:f.type, upsert:false});
     if (up.error){ toast("Upload failed: "+up.error.message); continue; }
-    done.push({path, name:f.name, mime:f.type});
+    done.push({path, name:f.name, mime:f.type, version:ver});
   }
   return done;
 }
@@ -667,7 +914,7 @@ $("saveBtn").addEventListener("click", async () => {
     const r = await sb.from(TABLE).insert(row).select("id").single();
     if (r.error){ toast("Save failed: "+r.error.message); $("saveBtn").disabled=false; return; }
     id = r.data.id;
-    const added = await uploadFiles(id, cur.pending.map(p=>p.file));
+    const added = await uploadFiles(id, cur.pending);
     if (added.length){
       const u = await sb.from(TABLE).update({attachments:added}).eq("id",id);
       if (u.error) toast("Could not save file list: "+u.error.message);
