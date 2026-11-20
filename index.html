@@ -84,7 +84,7 @@ textarea{resize:vertical;min-height:80px}
 .meta{color:var(--muted);font-size:13px}
 .bar{display:flex;height:8px;border-radius:99px;overflow:hidden;background:var(--pend-bg)}
 .bar i{display:block;height:100%}
-.bar .s-pass{background:var(--pass)} .bar .s-fail{background:var(--fail)} .bar .s-blocked{background:var(--block)} .bar .s-pending{background:var(--pend)}
+.bar .s-pass{background:var(--pass)} .bar .s-fail{background:var(--fail)} .bar .s-pending{background:var(--pend)}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .fbot{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:12px}
 .fbot b{color:var(--ink);font-weight:600}
@@ -92,7 +92,6 @@ textarea{resize:vertical;min-height:80px}
 .pill{display:inline-flex;align-items:center;border-radius:999px;padding:3px 11px;font-size:13px;font-weight:600}
 .pill.pass{background:var(--pass-bg);color:var(--pass)}
 .pill.fail{background:var(--fail-bg);color:var(--fail)}
-.pill.blocked{background:var(--block-bg);color:var(--block)}
 .pill.pending{background:var(--pend-bg);color:var(--pend)}
 .pill.mini{padding:1px 9px;font-size:12px}
 
@@ -107,7 +106,7 @@ textarea{resize:vertical;min-height:80px}
 .sum{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;text-align:left;box-shadow:var(--shadow)}
 .sum b{display:block;font-size:26px;font-weight:700;line-height:1.1}
 .sum span{font-size:13px;color:var(--muted)}
-.sum.k-all{border-left-color:var(--accent)} .sum.k-pass{border-left-color:var(--pass)} .sum.k-fail{border-left-color:var(--fail)} .sum.k-blocked{border-left-color:var(--block)} .sum.k-pending{border-left-color:var(--pend)}
+.sum.k-all{border-left-color:var(--accent)} .sum.k-pass{border-left-color:var(--pass)} .sum.k-fail{border-left-color:var(--fail)} .sum.k-pending{border-left-color:var(--pend)}
 .sum.on{background:var(--accent-soft);border-color:var(--accent)}
 .sum:hover{border-color:var(--accent)}
 
@@ -183,7 +182,6 @@ label{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-bot
 .stwrap{position:relative;display:inline-flex;align-items:center;border-radius:999px}
 .stwrap.pass{background:var(--pass-bg);color:var(--pass)}
 .stwrap.fail{background:var(--fail-bg);color:var(--fail)}
-.stwrap.blocked{background:var(--block-bg);color:var(--block)}
 .stwrap.pending{background:var(--pend-bg);color:var(--pend)}
 .stwrap:hover{box-shadow:0 0 0 2px color-mix(in srgb,currentColor 35%,transparent)}
 .stwrap svg{position:absolute;right:9px;pointer-events:none}
@@ -292,7 +290,6 @@ label{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-bot
           <option value="pending">Pending</option>
           <option value="pass">Pass</option>
           <option value="fail">Fail</option>
-          <option value="blocked">Blocked</option>
         </select>
       </div>
     </div>
@@ -370,7 +367,7 @@ const NONE_LABEL = "No folder";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const LABEL = {pending:"Pending", pass:"Pass", fail:"Fail", blocked:"Blocked"};
+const LABEL = {pending:"Pending", pass:"Pass", fail:"Fail"};
 const ico = (d, s=20) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 const I = {
   folder: ico('<path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'),
@@ -459,6 +456,7 @@ async function load(){
     return;
   }
   cases = c.data;
+  cases.forEach(x => { if (!LABEL[x.status]) x.status = "pending"; });
   draftFolders = draftFolders.filter(n => !cases.some(x => x.round === n));
   render();
   const paths = [];
@@ -514,10 +512,10 @@ function renderFolders(){
   if (!keys.length){ $("folders").innerHTML = '<div class="emptycard"><p>No folder matches your search.</p></div>'; return; }
   $("folders").innerHTML = keys.map(k => {
     const list = map[k];
-    const n = {pass:0,fail:0,blocked:0,pending:0};
+    const n = {pass:0,fail:0,pending:0};
     list.forEach(x => n[x.status]++);
-    const segs = ["pass","fail","blocked","pending"].filter(s=>n[s]).map(s=>`<i class="s-${s}" style="width:${n[s]/list.length*100}%"></i>`).join("");
-    const chips = ["pass","fail","blocked","pending"].filter(s=>n[s]).map(s=>`<span class="pill mini ${s}">${n[s]} ${LABEL[s]}</span>`).join("");
+    const segs = ["pass","fail","pending"].filter(s=>n[s]).map(s=>`<i class="s-${s}" style="width:${n[s]/list.length*100}%"></i>`).join("");
+    const chips = ["pass","fail","pending"].filter(s=>n[s]).map(s=>`<span class="pill mini ${s}">${n[s]} ${LABEL[s]}</span>`).join("");
     const testers = [...new Set(list.map(x=>x.tester).filter(Boolean))];
     const ts = list.map(tsOf).filter(Boolean);
     const when = ts.length ? fmt(Math.max(...ts)) : "No records yet";
@@ -542,7 +540,7 @@ function groups(x){
   return g;
 }
 function statusSelect(x){
-  const opts = ["pending","pass","fail","blocked"].map(s => `<option value="${s}"${s===x.status?" selected":""}>${LABEL[s]}</option>`).join("");
+  const opts = ["pending","pass","fail"].map(s => `<option value="${s}"${s===x.status?" selected":""}>${LABEL[s]}</option>`).join("");
   return `<span class="stwrap ${x.status}"><select class="stsel" data-id="${x.id}" aria-label="Result">${opts}</select>${I.chev}</span>`;
 }
 function verCell(x, g, ver){
@@ -561,11 +559,11 @@ function verCell(x, g, ver){
 function renderFolder(){
   const all = inFolder();
   all.forEach((x,i) => x._no = i+1);
-  const n = {pass:0,fail:0,blocked:0,pending:0};
+  const n = {pass:0,fail:0,pending:0};
   all.forEach(x => n[x.status]++);
   const stat = (k, num, label, on) => `<button class="sum k-${k} ${on?"on":""}" data-s="${k==="all"?"":k}"><b>${num}</b><span>${label}</span></button>`;
   $("summary").innerHTML = stat("all", all.length, "All records", !statusFilter) +
-    ["pass","fail","blocked","pending"].map(s => stat(s, n[s], LABEL[s], statusFilter===s)).join("");
+    ["pass","fail","pending"].map(s => stat(s, n[s], LABEL[s], statusFilter===s)).join("");
   const q = $("q").value.trim().toLowerCase();
   const rows = all.filter(x => (!statusFilter || x.status===statusFilter) &&
     (!q || [x.title,x.actual,x.tester].join(" ").toLowerCase().includes(q)));
