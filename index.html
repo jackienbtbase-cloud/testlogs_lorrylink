@@ -141,6 +141,30 @@ tr.row:hover td{background:var(--panel2)}
 .mvb{border:1px solid var(--line);background:var(--panel);border-radius:5px;font-size:11px;font-weight:600;padding:1px 8px;cursor:pointer}
 .mvb:hover{border-color:var(--accent);color:var(--accent)}
 
+/* groups */
+.gtabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.gtab{display:inline-flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;font-weight:500;font-size:14px}
+.gtab b{font-size:12px;font-weight:600;color:var(--muted);background:var(--panel2);border-radius:999px;padding:0 8px}
+.gtab:hover{border-color:var(--accent)}
+.gtab.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.gtab.on b{background:transparent;color:inherit}
+.grp{margin-bottom:22px}
+.ghead{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;padding:6px 2px 10px;cursor:pointer;text-align:left}
+.ghead .gdot{width:10px;height:10px;border-radius:50%;background:var(--gc,var(--accent))}
+.ghead .gname{font-size:17px;font-weight:700}
+.ghead .gcount{color:var(--muted);font-size:14px}
+.ghead .gpills{display:flex;gap:6px;margin-left:6px;flex-wrap:wrap}
+.ghead .gchev{margin-left:auto;color:var(--muted);transition:transform .15s}
+.grp.shut .gchev{transform:rotate(-90deg)}
+.grp.shut .card{display:none}
+.grp .card{border-top:3px solid var(--gc,var(--accent))}
+.g-admin{--gc:#8b95f7} .g-customer{--gc:var(--accent)} .g-transporter{--gc:#f0a04b} .g-other{--gc:#94a3b8}
+.live{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);padding:0 6px;white-space:nowrap}
+.live i{width:8px;height:8px;border-radius:50%;background:var(--pend)}
+.live.on i{background:var(--pass);box-shadow:0 0 0 3px var(--pass-bg)}
+.live.off i{background:var(--block)}
+#fViewOther{margin-top:8px}
+
 /* dialogs */
 dialog{border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--ink);padding:0;width:min(720px,94vw);max-height:92vh;box-shadow:0 20px 60px rgba(0,0,0,.35)}
 dialog::backdrop{background:rgba(6,12,18,.65);backdrop-filter:blur(2px)}
@@ -273,8 +297,9 @@ label{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-bot
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
         <input id="q" type="search" placeholder="Search view, what was updated, tester">
       </div>
-      <button class="btn" id="refresh">Refresh</button>
+      <span class="live" id="live" title="Changes from other people appear automatically"><i></i><span>Connecting…</span></span>
     </div>
+    <div class="gtabs" id="gtabs"></div>
     <div id="list"></div>
   </div>
 </div>
@@ -284,7 +309,15 @@ label{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-bot
   <div class="dhead"><h2 id="dtitle">New record</h2><button class="btn ghost" id="dclose" aria-label="Close">Close</button></div>
   <div class="dbody">
     <div class="two">
-      <div><label for="fView">View (page / screen tested)</label><input id="fView" placeholder="e.g. Job Posting page"></div>
+      <div><label for="fView">View (who is this for)</label>
+        <select id="fView">
+          <option value="Admin">Admin</option>
+          <option value="Customer">Customer</option>
+          <option value="Transporter">Transporter</option>
+          <option value="Other">Other</option>
+        </select>
+        <input id="fViewOther" placeholder="Other: what is it? e.g. Bug, History (optional)" hidden>
+      </div>
       <div><label for="fStatus">Result</label>
         <select id="fStatus">
           <option value="pending">Pending</option>
@@ -380,7 +413,13 @@ const I = {
   chev: ico('<path d="m6 9 6 6 6-6"/>', 12)
 };
 
-let cases = [], thumbs = {}, statusFilter = "";
+let cases = [], thumbs = {}, thumbsAt = 0, statusFilter = "", groupFilter = "";
+const collapsed = new Set();
+const GROUPS = ["Admin", "Customer", "Transporter", "Other"];
+const groupOf = x => {
+  const t = (x.title || "").trim().toLowerCase();
+  return GROUPS.slice(0, 3).find(g => g.toLowerCase() === t) || "Other";
+};
 let openFolder = null;
 let draftFolders = [];
 let cur = null;
@@ -431,8 +470,8 @@ $("aCancel").addEventListener("click", () => $("adlg").close());
 $("adlg").addEventListener("close", () => { const r = aRes; aRes = null; if (r) r(aVal); });
 
 // ---------- auth ----------
-function showLogin(){ $("appView").hidden = true; $("loginView").hidden = false; }
-function showApp(){ $("loginView").hidden = true; $("appView").hidden = false; load(); }
+function showLogin(){ stopRealtime(); $("appView").hidden = true; $("loginView").hidden = false; }
+function showApp(){ $("loginView").hidden = true; $("appView").hidden = false; load(); startRealtime(); }
 $("loginView").addEventListener("submit", async e => {
   e.preventDefault();
   $("lErr").textContent = ""; $("lBtn").disabled = true;
@@ -449,9 +488,10 @@ async function signOut(){ await sb.auth.signOut(); cases = []; openFolder = null
 })();
 
 // ---------- load ----------
-async function load(){
+async function load(opts = {}){
   const c = await sb.from(TABLE).select("*").order("id",{ascending:true});
   if (c.error){
+    if (opts.silent) return;
     $("folders").innerHTML = '<div class="emptycard"><h3>Could not load data</h3><p>This account may not be on the approved list, or the SQL setup has not been run (testlog_setup.sql, testlog_update.sql, testlog_update2.sql).</p></div>';
     return;
   }
@@ -461,9 +501,51 @@ async function load(){
   render();
   const paths = [];
   cases.forEach(x => (x.attachments||[]).forEach(a => paths.push(a.path)));
-  thumbs = await signUrls(paths);
-  refreshViews();
+  const stale = Date.now() - thumbsAt > 45*60*1000;   // signed URLs last 60 min
+  const need = stale ? paths : paths.filter(p => !thumbs[p]);
+  if (need.length){
+    const u = await signUrls(need);
+    thumbs = stale ? u : Object.assign(thumbs, u);
+    if (stale) thumbsAt = Date.now();
+    else if (!thumbsAt) thumbsAt = Date.now();
+    refreshViews();
+  } else if (vw && $("cv").open) renderViewer();
 }
+
+// ---------- live updates ----------
+let rtChan = null, rtTimer = null, pollTimer = null, syncing = false, syncAgain = false, liveOn = false;
+function setLive(on){
+  liveOn = on;
+  const el = $("live"); if (!el) return;
+  el.className = "live " + (on ? "on" : "off");
+  el.lastElementChild.textContent = on ? "Live" : "Reconnecting…";
+}
+function scheduleSync(){ clearTimeout(rtTimer); rtTimer = setTimeout(sync, 400); }
+async function sync(){
+  if ($("appView").hidden) return;
+  if (document.activeElement?.classList?.contains("stsel")) { scheduleSync(); return; }  // don't close an open dropdown
+  if (syncing){ syncAgain = true; return; }
+  syncing = true;
+  try { await load({silent:true}); }
+  finally { syncing = false; if (syncAgain){ syncAgain = false; scheduleSync(); } }
+}
+function startRealtime(){
+  stopRealtime();
+  rtChan = sb.channel("testlog-live")
+    .on("postgres_changes", {event:"*", schema:"public", table:TABLE}, scheduleSync)
+    .subscribe(st => {
+      if (st === "SUBSCRIBED") setLive(true);
+      else if (["CHANNEL_ERROR","TIMED_OUT","CLOSED"].includes(st)) setLive(false);
+    });
+  // safety net: if realtime is down, poll faster; otherwise a slow check
+  pollTimer = setInterval(() => { if (!document.hidden) sync(); }, 30000);
+}
+function stopRealtime(){
+  clearInterval(pollTimer); clearTimeout(rtTimer);
+  if (rtChan){ sb.removeChannel(rtChan); rtChan = null; }
+  setLive(false);
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden && !$("appView").hidden) sync(); });
 
 // ---------- render ----------
 function inFolder(){
@@ -488,7 +570,7 @@ function renderHeader(){
     const meta = `${list.length} record${list.length===1?"":"s"}` + (ts.length ? ` · last tested ${fmt(Math.max(...ts))}` : "");
     $("crumb").innerHTML = `<button class="btn" id="backBtn">${I.back}All folders</button><div class="ttl"><h1>${esc(fname(openFolder))}</h1><small>${esc(meta)}</small></div>`;
     $("hbtns").innerHTML = `<button class="btn primary" id="newBtn">${I.plus}New record</button><button class="btn" id="renameBtn">${I.edit}Rename</button><button class="btn danger" id="delFolderBtn">${I.trash}Delete folder</button><button class="btn ghost" id="outBtn">${I.out}Sign out</button>`;
-    $("backBtn").onclick = () => { openFolder = null; statusFilter = ""; $("q").value = ""; render(); };
+    $("backBtn").onclick = () => { openFolder = null; statusFilter = ""; groupFilter = ""; $("q").value = ""; render(); };
     $("newBtn").onclick = () => openCase(null);
     $("renameBtn").onclick = renameFolder;
     $("delFolderBtn").onclick = deleteFolder;
@@ -530,7 +612,7 @@ function renderFolders(){
 $("fq").addEventListener("input", renderFolders);
 $("folders").addEventListener("click", e => {
   const b = e.target.closest(".folder"); if (!b) return;
-  openFolder = b.dataset.k; statusFilter = ""; render();
+  openFolder = b.dataset.k; statusFilter = ""; groupFilter = ""; render();
 });
 
 const verOf = a => (a.version === "old" || a.version === "new") ? a.version : "none";
@@ -556,31 +638,12 @@ function verCell(x, g, ver){
   return `<div class="strip">${cells.join("")}</div>`;
 }
 
-function renderFolder(){
-  const all = inFolder();
-  all.forEach((x,i) => x._no = i+1);
-  const n = {pass:0,fail:0,pending:0};
-  all.forEach(x => n[x.status]++);
-  const stat = (k, num, label, on) => `<button class="sum k-${k} ${on?"on":""}" data-s="${k==="all"?"":k}"><b>${num}</b><span>${label}</span></button>`;
-  $("summary").innerHTML = stat("all", all.length, "All records", !statusFilter) +
-    ["pass","fail","pending"].map(s => stat(s, n[s], LABEL[s], statusFilter===s)).join("");
-  const q = $("q").value.trim().toLowerCase();
-  const rows = all.filter(x => (!statusFilter || x.status===statusFilter) &&
-    (!q || [x.title,x.actual,x.tester].join(" ").toLowerCase().includes(q)));
-  if (!rows.length){
-    $("list").innerHTML = `<div class="emptycard"><div class="ficon">${I.folder}</div><h3>${all.length ? "No records match" : "This folder is empty"}</h3><p>${all.length ? "Try another filter or search." : "Add a record for each view you tested in this round."}</p>${all.length ? "" : `<button class="btn primary" id="emptyRec">${I.plus}Add first record</button>`}</div>`;
-    if (!all.length) $("emptyRec").onclick = () => openCase(null);
-    return;
-  }
-  const hasNone = rows.some(x => (x.attachments||[]).some(a => verOf(a) === "none"));
-  $("list").innerHTML = `<div class="card"><table>
-    <thead><tr><th>No.</th><th>View</th><th>What was updated</th><th class="hide-m">Tested by</th><th class="hide-m">Tested at</th><th>Result</th><th><span class="vtag old">Old version</span></th><th><span class="vtag new">New version</span></th>${hasNone ? '<th><span class="vtag none">Unsorted</span></th>' : ""}</tr></thead>
-    <tbody>` + rows.map(x => {
-    const g = groups(x);
-    return `
+function rowHtml(x, showView, hasNone){
+  const g = groups(x);
+  return `
     <tr class="row" data-id="${x.id}" tabindex="0">
       <td class="c-no">${x._no}</td>
-      <td class="c-view">${esc(x.title)}</td>
+      ${showView ? `<td class="c-view">${esc(x.title)}</td>` : ""}
       <td class="c-note">${x.actual?esc(x.actual):'<span class="noshot">—</span>'}</td>
       <td class="hide-m">${x.tester?`<span class="by"><span class="av">${esc(x.tester.trim()[0].toUpperCase())}</span>${esc(x.tester)}</span>`:""}</td>
       <td class="c-when hide-m">${esc(fmt(x.tested_at||x.updated_at))}</td>
@@ -589,14 +652,73 @@ function renderFolder(){
       <td>${verCell(x, g, "new")}</td>
       ${hasNone ? `<td>${verCell(x, g, "none")}</td>` : ""}
     </tr>`;
-  }).join("") + `</tbody></table></div>`;
 }
+function tableHtml(rows, showView){
+  const hasNone = rows.some(x => (x.attachments||[]).some(a => verOf(a) === "none"));
+  return `<div class="card"><table>
+    <thead><tr><th>No.</th>${showView ? "<th>View</th>" : ""}<th>What was updated</th><th class="hide-m">Tested by</th><th class="hide-m">Tested at</th><th>Result</th><th><span class="vtag old">Old version</span></th><th><span class="vtag new">New version</span></th>${hasNone ? '<th><span class="vtag none">Unsorted</span></th>' : ""}</tr></thead>
+    <tbody>${rows.map(x => rowHtml(x, showView, hasNone)).join("")}</tbody></table></div>`;
+}
+
+function renderFolder(){
+  const all = inFolder();
+  // number records within their group (Admin #1, #2 ... Customer #1 ...)
+  const cnt = {};
+  all.forEach(x => { const g = groupOf(x); cnt[g] = (cnt[g]||0) + 1; x._no = cnt[g]; });
+  const n = {pass:0,fail:0,pending:0};
+  all.forEach(x => n[x.status]++);
+  const stat = (k, num, label, on) => `<button class="sum k-${k} ${on?"on":""}" data-s="${k==="all"?"":k}"><b>${num}</b><span>${label}</span></button>`;
+  $("summary").innerHTML = stat("all", all.length, "All records", !statusFilter) +
+    ["pass","fail","pending"].map(s => stat(s, n[s], LABEL[s], statusFilter===s)).join("");
+  const q = $("q").value.trim().toLowerCase();
+  const rows = all.filter(x => (!statusFilter || x.status===statusFilter) &&
+    (!q || [x.title,x.actual,x.tester].join(" ").toLowerCase().includes(q)));
+
+  const byGroup = {}; GROUPS.forEach(g => byGroup[g] = []);
+  rows.forEach(x => byGroup[groupOf(x)].push(x));
+
+  // group tabs
+  $("gtabs").hidden = !all.length;
+  $("gtabs").innerHTML = [`<button class="gtab ${!groupFilter?"on":""}" data-g="">All<b>${rows.length}</b></button>`]
+    .concat(GROUPS.map(g => `<button class="gtab ${groupFilter===g?"on":""}" data-g="${g}">${g}<b>${byGroup[g].length}</b></button>`)).join("");
+
+  if (!rows.length){
+    $("list").innerHTML = `<div class="emptycard"><div class="ficon">${I.folder}</div><h3>${all.length ? "No records match" : "This folder is empty"}</h3><p>${all.length ? "Try another filter or search." : "Add a record for each view you tested in this round."}</p>${all.length ? "" : `<button class="btn primary" id="emptyRec">${I.plus}Add first record</button>`}</div>`;
+    if (!all.length) $("emptyRec").onclick = () => openCase(null);
+    return;
+  }
+  const shown = GROUPS.filter(g => byGroup[g].length && (!groupFilter || groupFilter === g));
+  if (!shown.length){
+    $("list").innerHTML = '<div class="emptycard"><p>No records in this group.</p></div>';
+    return;
+  }
+  $("list").innerHTML = shown.map(g => {
+    const list = byGroup[g];
+    const c = {pass:0,fail:0,pending:0};
+    list.forEach(x => c[x.status]++);
+    const pills = ["pass","fail","pending"].filter(s => c[s]).map(s => `<span class="pill mini ${s}">${c[s]} ${LABEL[s]}</span>`).join("");
+    const shut = collapsed.has(g);
+    return `<section class="grp g-${g.toLowerCase()}${shut?" shut":""}">
+      <button type="button" class="ghead" data-toggle="${g}" aria-expanded="${!shut}">
+        <span class="gdot"></span><span class="gname">${g}</span><span class="gcount">${list.length} record${list.length===1?"":"s"}</span>
+        <span class="gpills">${pills}</span><span class="gchev">${I.chev}</span>
+      </button>
+      ${tableHtml(list, g === "Other")}
+    </section>`;
+  }).join("");
+}
+$("gtabs").addEventListener("click", e => {
+  const b = e.target.closest(".gtab"); if (!b) return;
+  groupFilter = b.dataset.g; renderFolder();
+});
 $("summary").addEventListener("click", e => {
   const b = e.target.closest(".sum"); if(!b) return;
   const s = b.dataset.s;
   statusFilter = (s && statusFilter===s) ? "" : s; renderFolder();
 });
 $("list").addEventListener("click", e => {
+  const h = e.target.closest(".ghead");
+  if (h){ const g = h.dataset.toggle; collapsed.has(g) ? collapsed.delete(g) : collapsed.add(g); renderFolder(); return; }
   const t = e.target.closest(".tcell");
   if (t){ openViewer(+t.dataset.case, t.dataset.ver, +t.dataset.i); return; }
   const m = e.target.closest(".mvb");
@@ -622,7 +744,7 @@ async function setStatus(id, status){
 }
 document.addEventListener("change", e => {
   const s = e.target.closest?.(".stsel");
-  if (s) setStatus(+s.dataset.id, s.value);
+  if (s){ setStatus(+s.dataset.id, s.value); s.blur(); }
 });
 
 async function setVersion(id, i, v){
@@ -707,7 +829,11 @@ $("cv").addEventListener("keydown", e => {
 });
 $("cv").addEventListener("close", () => { vw = null; });
 $("q").addEventListener("input", renderFolder);
-$("refresh").addEventListener("click", load);
+$("fView").addEventListener("change", () => {
+  const o = $("fView").value === "Other";
+  $("fViewOther").hidden = !o;
+  if (o) $("fViewOther").focus();
+});
 
 // ---------- folder actions ----------
 async function newFolder(){
@@ -745,8 +871,13 @@ async function deleteFolder(){
 async function openCase(id){
   const c = id ? cases.find(x=>x.id===id) : null;
   cur = {id, atts:[...(c?.attachments||[])], urls:{}, pending:[]};
-  $("dtitle").textContent = id ? `Record #${c._no}` : "New record";
-  $("fView").value = c?.title || "";
+  $("dtitle").textContent = id ? `${groupOf(c)} #${c._no}` : "New record";
+  {
+    const g = c ? groupOf(c) : "Admin";
+    $("fView").value = g;
+    $("fViewOther").value = (c && g === "Other" && (c.title||"").trim().toLowerCase() !== "other") ? c.title : "";
+    $("fViewOther").hidden = g !== "Other";
+  }
   $("fStatus").value = c?.status || "pending";
   $("fTester").value = c ? (c.tester||"") : (localStorage.getItem("lltest_name") || "");
   $("fWhen").value = toLocalInput(new Date(c ? (c.tested_at||c.updated_at||Date.now()) : Date.now()));
@@ -891,8 +1022,8 @@ async function uploadFiles(caseId, items){
 
 // ---------- save / delete record ----------
 $("saveBtn").addEventListener("click", async () => {
-  const title = $("fView").value.trim();
-  if (!title){ toast("Please enter the view."); $("fView").focus(); return; }
+  const cat = $("fView").value;
+  const title = cat === "Other" ? ($("fViewOther").value.trim() || "Other") : cat;
   const tester = $("fTester").value.trim();
   if (!tester){ toast("Please enter who tested it."); $("fTester").focus(); return; }
   const when = $("fWhen").value ? new Date($("fWhen").value).toISOString() : new Date().toISOString();
